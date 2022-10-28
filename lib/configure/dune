@@ -1,0 +1,4 @@
+(executable
+ (name configure)
+ (modules configure)
+ (libraries dune-configurator))

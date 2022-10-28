@@ -6,3 +6,8 @@
   (language c)
   (flags :standard "-D_GNU_SOURCE")
   (names epoll_stubs)))
+
+(rule
+ (target config.ml)
+ (action
+  (run ./configure/configure.exe)))
