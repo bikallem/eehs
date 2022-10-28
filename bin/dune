@@ -1,4 +1,3 @@
 (executable
- (public_name eehs)
- (name main)
+ (name epoll_hello)
  (libraries eehs))
