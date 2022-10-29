@@ -1,7 +1,7 @@
 (library
  (name eehs)
  (public_name eehs)
- (libraries unix)
+ (libraries unix optint)
  (foreign_stubs
   (language c)
   (flags :standard "-D_GNU_SOURCE")

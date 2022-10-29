@@ -23,7 +23,7 @@ let () =
         "EPOLLEXCLUSIVE", Int;
       ]
     |> List.map (function 
-      | name, C.C_define.Value.Int v -> Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
+      | name, C.C_define.Value.Int v -> Printf.sprintf "let %s = Optint.Int63.of_int 0x%x" (String.lowercase_ascii name) v
       | _ -> assert false)
     |> C.Flags.write_lines "config.ml"
   )
