@@ -19,7 +19,7 @@
  (name eehs)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune optint)
+ (depends ocaml dune optint cstruct)
  (tags
   (topics "to describe" your project)))
 

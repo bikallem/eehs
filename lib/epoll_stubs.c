@@ -31,7 +31,7 @@ value caml_epoll_create1(value v_unit)
   return Val_int(t);
 }
 
-value caml_epoll_ctl(value v_epoll_fd, value v_op, value v_fd, value v_flags)
+value caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
 {
   struct epoll_event evt;
 
@@ -39,8 +39,14 @@ value caml_epoll_ctl(value v_epoll_fd, value v_op, value v_fd, value v_flags)
   evt.data.ptr = NULL;
   evt.data.fd = Long_val(v_fd);
 
-  if (epoll_ctl(Long_val(v_epoll_fd), Int63_val(v_op), Long_val(v_fd), &evt) == -1)
+  if (epoll_ctl(Long_val(v_epollfd), Int63_val(v_op), Long_val(v_fd), &evt) == -1)
     caml_uerror("epoll_ctl", Nothing);
 
   return Val_unit;
+}
+
+value caml_epoll_pwait(value v_epollfd, value v_ready_events, value v_timeoutns)
+{
+  
+  return Val_int(0);
 }
