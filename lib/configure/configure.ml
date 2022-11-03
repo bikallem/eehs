@@ -27,9 +27,7 @@ let () =
             ]
         |> List.map (function
              | name, C.C_define.Value.Int v ->
-                 Printf.sprintf "let %s = Optint.Int63.of_int 0x%x"
-                   (String.lowercase_ascii name)
-                   v
+                 Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
              | _ -> assert false)
       in
       let sizeofs =
@@ -38,6 +36,7 @@ let () =
             [
               ("offsetof(struct epoll_event, data.fd)", Int);
               ("offsetof(struct epoll_event, events)", Int);
+              ("sizeof(struct epoll_event)", Int);
             ]
         |> List.map (function
              | name, C.C_define.Value.Int v ->
@@ -47,6 +46,7 @@ let () =
                        "offsetof_epoll_fd"
                    | "offsetof(struct epoll_event, events)" ->
                        "offsetof_epoll_events"
+                   | "sizeof(struct epoll_event)" -> "sizeof_epoll_event"
                    | _ -> assert false
                  in
                  Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v

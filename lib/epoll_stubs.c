@@ -45,7 +45,7 @@ value caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
   return Val_unit;
 }
 
-value caml_epoll_pwait(value v_epollfd, value v_ready_events, value v_timeoutns)
+value caml_epoll_pwait(value v_epollfd, value v_epoll_events, value v_maxevents, value v_timeoutns)
 {
   
   return Val_int(0);

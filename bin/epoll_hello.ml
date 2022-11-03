@@ -1,5 +1,5 @@
 open Eehs
 
 let () =
-  let _epoll = Epoll.epoll_create () in
+  let _epoll = Epoll.create 10 in
   print_endline "Hello, World!"
