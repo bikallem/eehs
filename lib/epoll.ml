@@ -51,20 +51,17 @@ module C_epoll = struct
 
   external epoll_wait :
     epoll_fd -> epoll_events -> maxevents -> timeout_ms -> int
-    = "caml_epoll_pwait"
+    = "caml_epoll_wait"
 end
 
-type t = {
-  epollfd : C_epoll.epoll_fd;
-  max_ready_events : int;
-  epoll_events : Cstruct.t;
-  mutable num_ready_events : int;
-}
+type t =
+  { epollfd: C_epoll.epoll_fd
+  ; max_ready_events: int
+  ; epoll_events: Cstruct.t
+  ; mutable num_ready_events: int }
 
 let create max_ready_events =
-  {
-    epollfd = C_epoll.epoll_create ();
-    max_ready_events;
-    epoll_events = Cstruct.create (Config.sizeof_epoll_event * max_ready_events);
-    num_ready_events = 0;
-  }
+  { epollfd= C_epoll.epoll_create ()
+  ; max_ready_events
+  ; epoll_events= Cstruct.create (Config.sizeof_epoll_event * max_ready_events)
+  ; num_ready_events= 0 }
