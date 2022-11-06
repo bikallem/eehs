@@ -1,11 +1,10 @@
 (library
  (name eehs)
  (public_name eehs)
- (libraries unix optint cstruct)
  (foreign_stubs
   (language c)
-  (flags :standard "-D_GNU_SOURCE")
-  (names epoll_stubs)))
+  (names epoll_stubs))
+ (libraries unix optint cstruct base_bigstring))
 
 (rule
  (target config.ml)

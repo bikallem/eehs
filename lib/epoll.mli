@@ -15,4 +15,5 @@ val create : int -> t
 val add : t -> Unix.file_descr -> Io_events.t -> unit
 val modify : t -> Unix.file_descr -> Io_events.t -> unit
 val remove : t -> Unix.file_descr -> unit
-val poll_io : ?timeout_ms:int -> t -> [`Ok | `Timeout]
+val poll_io : ?timeout_ms:int -> t -> [ `Ok | `Timeout ]
+val iter : (Unix.file_descr -> Io_events.t -> unit) -> t -> unit

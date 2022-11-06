@@ -1,2 +1,1 @@
-profile=ocamlformat
-module-item-spacing=compact
+profile=conventional
