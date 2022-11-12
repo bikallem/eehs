@@ -31,6 +31,7 @@ module Io_events = struct
   type t = int
 
   let add = ( lor )
+  let ( + ) = add
   let remove a b = a land lnot b
   let readable = Config.epollin lor Config.epollet lor Config.epollrdhup
   let writable = Config.epollout lor Config.epollet
