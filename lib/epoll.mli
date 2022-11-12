@@ -3,18 +3,26 @@ module Io_events : sig
 
   val readable : t
   val writable : t
+
+  val rw : t
+  (** [rw] is [readable + writable] *)
+
   val add : t -> t -> t
   val ( + ) : t -> t -> t
   val remove : t -> t -> t
   val is_readable : t -> bool
   val is_writable : t -> bool
+  val is_closed : t -> bool
 end
 
 type t
+(** Represents Linux epoll object. *)
 
 val create : int -> t
+(** [create maxevents] is [t] which can listen to at most [maxevents] ojects *)
+
 val add : t -> Unix.file_descr -> Io_events.t -> unit
 val modify : t -> Unix.file_descr -> Io_events.t -> unit
 val remove : t -> Unix.file_descr -> unit
-val poll_io : ?timeout_ms:int -> t -> [ `Ok | `Timeout ]
-val iter : (Unix.file_descr -> Io_events.t -> unit) -> t -> unit
+val poll_io : ?timeout_ms:int -> t -> unit
+val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit

@@ -35,8 +35,15 @@ module Io_events = struct
   let remove a b = a land lnot b
   let readable = Config.epollin lor Config.epollet lor Config.epollrdhup
   let writable = Config.epollout lor Config.epollet
-  let is_readable t = t land readable = t
-  let is_writable t = t land writable = t
+
+  let rw =
+    Config.epollin lor Config.epollout lor Config.epollrdhup lor Config.epollet
+
+  let is_readable t = t land Config.epollin = t
+  let is_writable t = t land Config.epollout = t
+
+  let is_closed t =
+    t land Config.epollhup = t || (is_readable t && t land Config.epollrdhup = t)
 end
 
 type t = {
@@ -54,15 +61,17 @@ let create maxevents =
     num_ready_events = 0;
   }
 
-let add t fd io_events = epoll_ctl t.epollfd Op.op_add fd io_events
+let add t fd io_events =
+  Unix.set_nonblock fd;
+  epoll_ctl t.epollfd Op.op_add fd io_events
+
 let modify t fd io_events = epoll_ctl t.epollfd Op.op_mod fd io_events
 let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
 
-let poll_io ?(timeout_ms = 0) (t : t) : [ `Ok | `Timeout ] =
+let poll_io ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
   t.num_ready_events <-
-    epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms;
-  if t.num_ready_events = 0 then `Timeout else `Ok
+    epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms
 
 let ready_fd epoll_events i =
   Base_bigstring.unsafe_get_int32_le epoll_events
@@ -73,7 +82,7 @@ let io_events epoll_events i =
   Base_bigstring.unsafe_get_int32_le epoll_events
     ~pos:(i * Config.sizeof_epoll_event * Config.offsetof_epoll_events)
 
-let iter f t =
+let iter t f =
   for i = 0 to t.num_ready_events - 1 do
     f (ready_fd t.epoll_events i) (io_events t.epoll_events i)
   done
