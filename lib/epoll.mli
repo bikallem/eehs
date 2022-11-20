@@ -12,7 +12,14 @@ module Io_events : sig
   val remove : t -> t -> t
   val is_readable : t -> bool
   val is_writable : t -> bool
-  val is_closed : t -> bool
+  val is_read_closed : t -> bool
+  val is_write_closed : t -> bool
+  val is_error : t -> bool
+end
+
+module Error : sig
+  val is_ewouldblock : int -> bool
+  val is_eagain : int -> bool
 end
 
 type t

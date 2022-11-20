@@ -42,8 +42,18 @@ module Io_events = struct
   let is_readable t = t land Config.epollin = t
   let is_writable t = t land Config.epollout = t
 
-  let is_closed t =
+  let is_read_closed t =
     t land Config.epollhup = t || (is_readable t && t land Config.epollrdhup = t)
+
+  let is_write_closed t =
+    t land Config.epollhup = t || (is_writable t && t land Config.epollrdhup = t)
+
+  let is_error t = t land Config.epollerr = t
+end
+
+module Error = struct
+  let is_ewouldblock i = i = Config.ewouldblock
+  let is_eagain i = i = Config.ewouldblock
 end
 
 type t = {

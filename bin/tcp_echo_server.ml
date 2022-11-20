@@ -1,7 +1,13 @@
 open Eehs
 
+let buf = Bytes.create 4096
+
+let rec read fd =
+  let got = Unix.read fd buf 0 4096 in
+  if got = 0 then raise End_of_file
+  else if Epoll.Error.is_ewouldblock got || Epoll.Error.is_eagain got then ()
+
 let handle_client io_events _client_fd _client_addr =
-  let buf = Bytes.create 1024 in
   if Epoll.Io_events.is_readable io_events then ()
   else if Epoll.Io_events.is_writable io_events then ()
   else ()
