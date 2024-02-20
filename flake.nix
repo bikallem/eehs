@@ -114,6 +114,9 @@
         ];
 
         packages = with opkgs; [
+          base_bigstring
+          dune-configurator
+          cstruct
           miou
           bheap
           fmt
@@ -129,6 +132,7 @@
           lwt
           pkgs.netcat
           pkgs.rlwrap
+          pkgs.clang-tools
         ];
       };
     });
