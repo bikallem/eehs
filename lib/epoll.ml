@@ -48,12 +48,6 @@ module Io_events = struct
   let is_error t = t land Config.epollerr = t
 end
 
-(* TODO remove *)
-module Error = struct
-  let is_ewouldblock i = i = Config.ewouldblock
-  let is_eagain i = i = Config.ewouldblock
-end
-
 type t = {
   epollfd : epoll_fd;
   maxevents : maxevents;

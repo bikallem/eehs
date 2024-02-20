@@ -17,11 +17,6 @@ module Io_events : sig
   val is_error : t -> bool
 end
 
-module Error : sig
-  val is_ewouldblock : int -> bool
-  val is_eagain : int -> bool
-end
-
 type t
 (** Represents Linux epoll object. *)
 

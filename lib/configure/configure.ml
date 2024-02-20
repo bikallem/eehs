@@ -24,8 +24,6 @@ let () =
               ("EPOLLONESHOT", Int);
               ("EPOLLWAKEUP", Int);
               ("EPOLLEXCLUSIVE", Int);
-              ("EAGAIN", Int);
-              ("EWOULDBLOCK", Int);
             ]
         |> List.map (function
              | name, C.C_define.Value.Int v ->
