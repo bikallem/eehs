@@ -31,20 +31,19 @@ let () =
   let client_connections = Hashtbl.create max_connections in
 
   (* Run epoll/accept loop *)
-  (* while true do *)
-  Epoll.poll_io ~timeout_ms:(-1) epoll;
-  (* Printf.printf "\nepoll returned%!"; *)
-  Epoll.iter epoll (fun fd _io_events ->
-      if fd = server_fd then (
-        let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
-        Format.(
-          fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
+  while true do
+    Epoll.poll_io ~timeout_ms:(-1) epoll;
+    Epoll.iter epoll (fun fd _io_events ->
+        if fd = server_fd then (
+          let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
+          Format.(
+            fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
 
-        Unix.set_nonblock client_fd;
-        Epoll.add epoll client_fd Epoll.Io_events.readable;
-        let handle_client = handle_client client_fd client_addr in
-        Hashtbl.replace client_connections client_fd handle_client)
-      else
-        let handle_client = Hashtbl.find client_connections fd in
-        handle_client ())
-(* done *)
+          Unix.set_nonblock client_fd;
+          Epoll.add epoll client_fd Epoll.Io_events.readable;
+          let handle_client = handle_client client_fd client_addr in
+          Hashtbl.replace client_connections client_fd handle_client)
+        else
+          let handle_client = Hashtbl.find client_connections fd in
+          handle_client ())
+  done
