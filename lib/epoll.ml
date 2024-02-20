@@ -79,7 +79,6 @@ let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
 let poll_io ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
   let ready = epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
-  Printf.printf "\nready: %d%!" ready;
   t.num_ready_events <- ready
 
 let ready_fd epoll_events i =

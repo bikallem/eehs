@@ -1,39 +1,50 @@
 open Eehs
 
-let buf = Bytes.create 4096
+let pp_sockaddr fmt = function
+  | Unix.ADDR_UNIX _ -> failwith "Unix domain socket not supported"
+  | ADDR_INET (addr, port) ->
+    Format.fprintf fmt "%s.%d" (Unix.string_of_inet_addr addr) port
 
-let rec read fd =
-  let got = Unix.read fd buf 0 4096 in
-  if got = 0 then raise End_of_file
-  else if Epoll.Error.is_ewouldblock got || Epoll.Error.is_eagain got then ()
+let handle_client client_fd _client_addr () =
+  let buflen = 1024 in
+  let buf = Bytes.create buflen in
+  match Unix.read client_fd buf 0 buflen with
+  | got when got = 0 -> () (* TODO close and remove from epoll. *)
+  | got -> ignore (Unix.write client_fd buf 0 got : int)
+  | exception Unix.Unix_error ((EAGAIN | EWOULDBLOCK), _, _) -> ()
 
-let handle_client io_events _client_fd _client_addr =
-  if Epoll.Io_events.is_readable io_events then ()
-  else if Epoll.Io_events.is_writable io_events then ()
-  else ()
-
-let client_connections = Hashtbl.create 10
-
-let rec run epoll server_fd =
-  Epoll.poll_io epoll;
-  Epoll.iter epoll (fun fd io_events ->
-      if fd = server_fd then (
-        let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
-        Epoll.add epoll client_fd Epoll.Io_events.rw;
-        Hashtbl.add client_connections client_fd client_addr)
-      else
-        match Hashtbl.find client_connections fd with
-        | client_addr -> handle_client io_events fd client_addr
-        | exception Not_found -> assert false);
-  run epoll server_fd
+let max_connections = 128
 
 let () =
-  let addr = Unix.(ADDR_INET (inet6_addr_loopback, 9000)) in
+  (* Setup server socket. *)
+  let addr = Unix.(ADDR_INET (inet_addr_loopback, 9000)) in
   let server_fd = Unix.(socket ~cloexec:true PF_INET SOCK_STREAM 0) in
-  Unix.setsockopt server_fd Unix.SO_REUSEADDR true;
+  Unix.set_nonblock server_fd;
+  Unix.(setsockopt server_fd SO_REUSEADDR true);
+  Unix.(setsockopt server_fd SO_REUSEPORT true);
   Unix.bind server_fd addr;
-  Unix.listen server_fd 128;
+  Unix.listen server_fd max_connections;
 
-  let epoll = Epoll.create 128 in
+  let epoll = Epoll.create max_connections in
   Epoll.add epoll server_fd Epoll.Io_events.readable;
-  run epoll server_fd
+
+  let client_connections = Hashtbl.create max_connections in
+
+  (* Run epoll/accept loop *)
+  (* while true do *)
+  Epoll.poll_io ~timeout_ms:(-1) epoll;
+  (* Printf.printf "\nepoll returned%!"; *)
+  Epoll.iter epoll (fun fd _io_events ->
+      if fd = server_fd then (
+        let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
+        Format.(
+          fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
+
+        Unix.set_nonblock client_fd;
+        Epoll.add epoll client_fd Epoll.Io_events.readable;
+        let handle_client = handle_client client_fd client_addr in
+        Hashtbl.replace client_connections client_fd handle_client)
+      else
+        let handle_client = Hashtbl.find client_connections fd in
+        handle_client ())
+(* done *)

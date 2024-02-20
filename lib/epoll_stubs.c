@@ -37,21 +37,20 @@ value
 caml_epoll_wait(value v_epollfd,
                 value v_epoll_events,
                 value v_maxevents,
-                value v_timeout)
+                value v_timeout_ms)
 {
   CAMLparam1(v_epoll_events);
   struct epoll_event* ev;
-  int retcode;
+  int retcode, timeout;
 
+  timeout = Int_val(v_timeout_ms);
   ev = (struct epoll_event*)Caml_ba_data_val(v_epoll_events);
 
   if (0 == timeout) {
-    retcode = epoll_wait(
-      Int_val(v_epollfd), ev, Int_val(v_maxevents), Int_val(v_timeout));
+    retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
   } else {
     caml_enter_blocking_section();
-    retcode = epoll_wait(
-      Int_val(v_epollfd), ev, Int_val(v_maxevents), Int_val(v_timeout));
+    retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
     caml_leave_blocking_section();
   }
 
