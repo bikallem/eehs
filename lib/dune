@@ -4,7 +4,7 @@
  (foreign_stubs
   (language c)
   (names epoll_stubs))
- (libraries unix optint cstruct base_bigstring))
+ (libraries unix cstruct base_bigstring))
 
 (rule
  (target config.ml)

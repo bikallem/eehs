@@ -33,12 +33,9 @@ module Io_events = struct
   let add = ( lor )
   let ( + ) = add
   let remove a b = a land lnot b
-  let readable = Config.epollin lor Config.epollet lor Config.epollrdhup
-  let writable = Config.epollout lor Config.epollet
-
-  let rw =
-    Config.epollin lor Config.epollout lor Config.epollrdhup lor Config.epollet
-
+  let readable = Config.epollin lor Config.epollrdhup
+  let writable = Config.epollout
+  let rw = readable + writable
   let is_readable t = t land Config.epollin = t
   let is_writable t = t land Config.epollout = t
 
@@ -51,6 +48,7 @@ module Io_events = struct
   let is_error t = t land Config.epollerr = t
 end
 
+(* TODO remove *)
 module Error = struct
   let is_ewouldblock i = i = Config.ewouldblock
   let is_eagain i = i = Config.ewouldblock
@@ -80,8 +78,9 @@ let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
 
 let poll_io ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
-  t.num_ready_events <-
-    epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms
+  let ready = epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
+  Printf.printf "\nready: %d%!" ready;
+  t.num_ready_events <- ready
 
 let ready_fd epoll_events i =
   Base_bigstring.unsafe_get_int32_le epoll_events

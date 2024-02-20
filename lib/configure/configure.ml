@@ -29,7 +29,7 @@ let () =
             ]
         |> List.map (function
              | name, C.C_define.Value.Int v ->
-                 Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
+               Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
              | _ -> assert false)
       in
       let sizeofs =
@@ -42,16 +42,16 @@ let () =
             ]
         |> List.map (function
              | name, C.C_define.Value.Int v ->
-                 let name =
-                   match name with
-                   | "offsetof(struct epoll_event, data.fd)" ->
-                       "offsetof_epoll_fd"
-                   | "offsetof(struct epoll_event, events)" ->
-                       "offsetof_epoll_events"
-                   | "sizeof(struct epoll_event)" -> "sizeof_epoll_event"
-                   | _ -> assert false
-                 in
-                 Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
+               let name =
+                 match name with
+                 | "offsetof(struct epoll_event, data.fd)" ->
+                   "offsetof_epoll_fd"
+                 | "offsetof(struct epoll_event, events)" ->
+                   "offsetof_epoll_events"
+                 | "sizeof(struct epoll_event)" -> "sizeof_epoll_event"
+                 | _ -> assert false
+               in
+               Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
              | _ -> assert false)
       in
       let lines = defs @ sizeofs in
