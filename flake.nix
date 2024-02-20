@@ -130,6 +130,7 @@
           notty
           nottui
           lwt
+          pkgs.hyperfine
           pkgs.netcat
           pkgs.rlwrap
           pkgs.clang-tools
