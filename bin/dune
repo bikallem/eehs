@@ -1,3 +1,3 @@
 (executables
- (names epoll_hello tcp_echo_server)
+ (names tcp_echo_server)
  (libraries eehs unix))
