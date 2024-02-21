@@ -5,13 +5,25 @@ let pp_sockaddr fmt = function
   | ADDR_INET (addr, port) ->
     Format.fprintf fmt "%s.%d" (Unix.string_of_inet_addr addr) port
 
-let handle_client client_fd _client_addr () =
+let handle_client (epoll : Epoll.t) (_ : Unix.sockaddr)
+    (client_fd, (_ : Epoll.Io_events.t)) =
   let buflen = 1024 in
   let buf = Bytes.create buflen in
   match Unix.read client_fd buf 0 buflen with
-  | got when got = 0 -> () (* TODO close and remove from epoll. *)
+  | got when got = 0 ->
+    Epoll.remove epoll client_fd;
+    Unix.close client_fd
   | got -> ignore (Unix.write client_fd buf 0 got : int)
   | exception Unix.Unix_error ((EAGAIN | EWOULDBLOCK), _, _) -> ()
+
+let serverfd_cb (epoll : Epoll.t) fdcb (server_fd, (_ : Epoll.Io_events.t)) =
+  let client_fd, client_addr = Epoll.accept4 ~cloexec:true server_fd in
+
+  Format.(fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
+
+  Epoll.add epoll client_fd Epoll.Io_events.readable;
+  let handle_client = handle_client epoll client_addr in
+  Hashtbl.replace fdcb client_fd handle_client
 
 let max_connections = 128
 
@@ -28,22 +40,14 @@ let () =
   let epoll = Epoll.create max_connections in
   Epoll.add epoll server_fd Epoll.Io_events.readable;
 
-  let client_connections = Hashtbl.create max_connections in
+  (* file_descr => callback *)
+  let fdcb = Hashtbl.create max_connections in
+  Hashtbl.replace fdcb server_fd (serverfd_cb epoll fdcb);
 
   (* Run epoll/accept loop *)
   while true do
     Epoll.epoll_wait ~timeout_ms:(-1) epoll;
-    Epoll.iter epoll (fun fd _io_events ->
-        if fd = server_fd then (
-          let client_fd, client_addr = Epoll.accept4 ~cloexec:true server_fd in
-          Format.(
-            fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
-
-          Unix.set_nonblock client_fd;
-          Epoll.add epoll client_fd Epoll.Io_events.readable;
-          let handle_client = handle_client client_fd client_addr in
-          Hashtbl.replace client_connections client_fd handle_client)
-        else
-          let handle_client = Hashtbl.find client_connections fd in
-          handle_client ())
+    Epoll.iter epoll (fun fd io_events ->
+        let cb = Hashtbl.find fdcb fd in
+        cb (fd, io_events))
   done
