@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#define _st_uint8(v) ((const uint8_t*)(String_val(v)))
+
 value
 caml_epoll_create1(void)
 {
@@ -89,22 +91,15 @@ caml_accept4(value v_cloexec, value v_fd)
 }
 
 value
-caml_read(value fd, value buf, value ofs, value len)
+caml_read(value vfd, value vbuf, value vofs, value vlen)
 {
-  CAMLparam1(buf);
-  long numbytes, offset;
-  int ret;
-  char iobuf[UNIX_BUFFER_SIZE];
+  CAMLparam4(vfd, vbuf, vofs, vlen);
+  int offset, ret;
 
-  numbytes = Long_val(len);
-  if (numbytes > UNIX_BUFFER_SIZE)
-    numbytes = UNIX_BUFFER_SIZE;
-
-  offset = Long_val(ofs);
-  ret = read(Int_val(fd), iobuf, (int)numbytes);
+  offset = Int_val(vofs);
+  ret = read(Int_val(vfd), Bytes_val(vbuf) + offset, Int_val(vlen));
   if (ret == -1)
     caml_uerror("read", Nothing);
 
-  memmove(&Byte(buf, offset), iobuf, ret);
   CAMLreturn(Val_int(ret));
 }
