@@ -21,7 +21,7 @@ let serverfd_cb (epoll : Epoll.t) fdcb (server_fd, (_ : Epoll.Io_events.t)) =
 
   Format.(fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
 
-  Epoll.add epoll client_fd Epoll.Io_events.readable;
+  Epoll.add epoll client_fd Epoll.Io_events.read;
   let clientfd_cb = clientfd_cb epoll client_addr in
   Hashtbl.replace fdcb client_fd clientfd_cb
 
@@ -38,9 +38,9 @@ let () =
   Unix.listen server_fd max_connections;
 
   let epoll = Epoll.create max_connections in
-  Epoll.add epoll server_fd Epoll.Io_events.readable;
+  Epoll.add epoll server_fd Epoll.Io_events.read;
 
-  (* file_descr => callback *)
+  (* hashtble with mapping {file_descr => callback} *)
   let fdcb = Hashtbl.create max_connections in
   Hashtbl.replace fdcb server_fd (serverfd_cb epoll fdcb);
 

@@ -1,11 +1,15 @@
+(** [Io_events] is a set of Input/Output events that is monitored by epoll. *)
 module Io_events : sig
   type t
 
-  val readable : t
-  val writable : t
+  val read : t
+  (** [read] is [t] which contains EPOLLIN event. *)
+
+  val write : t
+  (** [write] is [t] which conatsin EPOLLOUT event. *)
 
   val rw : t
-  (** [rw] is [readable + writable] *)
+  (** [rw] is [read + write] *)
 
   val add : t -> t -> t
   val ( + ) : t -> t -> t
