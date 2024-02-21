@@ -87,3 +87,24 @@ caml_accept4(value v_cloexec, value v_fd)
   Field(res, 1) = a;
   CAMLreturn(res);
 }
+
+value
+caml_read(value fd, value buf, value ofs, value len)
+{
+  CAMLparam1(buf);
+  long numbytes, offset;
+  int ret;
+  char iobuf[UNIX_BUFFER_SIZE];
+
+  numbytes = Long_val(len);
+  if (numbytes > UNIX_BUFFER_SIZE)
+    numbytes = UNIX_BUFFER_SIZE;
+
+  offset = Long_val(ofs);
+  ret = read(Int_val(fd), iobuf, (int)numbytes);
+  if (ret == -1)
+    caml_uerror("read", Nothing);
+
+  memmove(&Byte(buf, offset), iobuf, ret);
+  CAMLreturn(Val_int(ret));
+}

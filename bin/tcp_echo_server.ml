@@ -9,7 +9,7 @@ let clientfd_cb (epoll : Epoll.t) (_ : Unix.sockaddr)
     (client_fd, (_ : Epoll.Io_events.t)) =
   let buflen = 1024 in
   let buf = Bytes.create buflen in
-  match Unix.read client_fd buf 0 buflen with
+  match Epoll.read client_fd buf 0 buflen with
   | got when got = 0 ->
     Epoll.remove epoll client_fd;
     Unix.close client_fd

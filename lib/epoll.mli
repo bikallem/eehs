@@ -37,3 +37,5 @@ val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
 
 val accept4 :
   ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+
+val read : Unix.file_descr -> bytes -> int -> int -> int
