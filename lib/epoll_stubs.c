@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <caml/alloc.h>
 #include <caml/bigarray.h>
 #include <caml/fail.h>
@@ -7,9 +8,10 @@
 #include <caml/unixsupport.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 value
-caml_epoll_create1(value v_unit)
+caml_epoll_create1(void)
 {
   int epoll_fd = epoll_create1(EPOLL_CLOEXEC);
   if (epoll_fd == -1)
@@ -18,9 +20,10 @@ caml_epoll_create1(value v_unit)
   return Val_int(epoll_fd);
 }
 
-value
+void
 caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
 {
+  CAMLparam4(v_epollfd, v_op, v_fd, v_flags);
   struct epoll_event evt;
 
   evt.data.ptr = NULL;
@@ -30,7 +33,7 @@ caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
   if (epoll_ctl(Int_val(v_epollfd), Int_val(v_op), Int_val(v_fd), &evt) == -1)
     caml_uerror("epoll_ctl", Nothing);
 
-  return Val_unit;
+  CAMLreturn0;
 }
 
 value
@@ -39,7 +42,7 @@ caml_epoll_wait(value v_epollfd,
                 value v_maxevents,
                 value v_timeout_ms)
 {
-  CAMLparam1(v_epoll_events);
+  CAMLparam4(v_epollfd, v_epoll_events, v_maxevents, v_timeout_ms);
   struct epoll_event* ev;
   int retcode, timeout;
 
@@ -58,4 +61,29 @@ caml_epoll_wait(value v_epollfd,
     caml_uerror("epoll_wait", Nothing);
 
   CAMLreturn(Val_int(retcode));
+}
+
+value
+caml_accept4(value v_cloexec, value v_fd)
+{
+  CAMLparam2(v_cloexec, v_fd);
+  CAMLlocal1(a);
+  int flags;
+  int retcode;
+  value res;
+  union sock_addr_union addr;
+  socklen_param_type addr_len;
+  int clo = caml_unix_cloexec_p(v_cloexec);
+
+  addr_len = sizeof(addr);
+  flags = SOCK_NONBLOCK;
+  retcode = accept4(
+    Int_val(v_fd), &addr.s_gen, &addr_len, clo ? SOCK_CLOEXEC | flags : flags);
+  if (retcode == -1)
+    caml_uerror("accept4", Nothing);
+  a = caml_unix_alloc_sockaddr(&addr, addr_len, retcode);
+  res = caml_alloc_small(2, 0);
+  Field(res, 0) = Val_int(retcode);
+  Field(res, 1) = a;
+  CAMLreturn(res);
 }

@@ -3,7 +3,8 @@
  (public_name eehs)
  (foreign_stubs
   (language c)
-  (names epoll_stubs))
+  (names epoll_stubs)
+  (flags :standard))
  (libraries unix cstruct base_bigstring))
 
 (rule
