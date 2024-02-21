@@ -70,7 +70,7 @@ let add t fd io_events =
 let modify t fd io_events = epoll_ctl t.epollfd Op.op_mod fd io_events
 let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
 
-let poll_io ?(timeout_ms = 0) (t : t) =
+let epoll_wait ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
   let ready = epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
   t.num_ready_events <- ready

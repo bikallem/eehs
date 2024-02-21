@@ -32,7 +32,7 @@ let () =
 
   (* Run epoll/accept loop *)
   while true do
-    Epoll.poll_io ~timeout_ms:(-1) epoll;
+    Epoll.epoll_wait ~timeout_ms:(-1) epoll;
     Epoll.iter epoll (fun fd _io_events ->
         if fd = server_fd then (
           let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
