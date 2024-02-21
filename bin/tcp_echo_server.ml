@@ -5,7 +5,7 @@ let pp_sockaddr fmt = function
   | ADDR_INET (addr, port) ->
     Format.fprintf fmt "%s.%d" (Unix.string_of_inet_addr addr) port
 
-let handle_client (epoll : Epoll.t) (_ : Unix.sockaddr)
+let clientfd_cb (epoll : Epoll.t) (_ : Unix.sockaddr)
     (client_fd, (_ : Epoll.Io_events.t)) =
   let buflen = 1024 in
   let buf = Bytes.create buflen in
@@ -22,8 +22,8 @@ let serverfd_cb (epoll : Epoll.t) fdcb (server_fd, (_ : Epoll.Io_events.t)) =
   Format.(fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
 
   Epoll.add epoll client_fd Epoll.Io_events.readable;
-  let handle_client = handle_client epoll client_addr in
-  Hashtbl.replace fdcb client_fd handle_client
+  let clientfd_cb = clientfd_cb epoll client_addr in
+  Hashtbl.replace fdcb client_fd clientfd_cb
 
 let max_connections = 128
 
