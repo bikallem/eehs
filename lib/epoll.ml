@@ -27,6 +27,10 @@ external epoll_wait : epoll_fd -> epoll_events -> maxevents -> timeout_ms -> int
 
 external file_descr_of_int : int -> Unix.file_descr = "%identity"
 
+external accept4 :
+  ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+  = "caml_accept4"
+
 module Io_events = struct
   type t = int
 

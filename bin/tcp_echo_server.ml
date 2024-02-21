@@ -35,7 +35,7 @@ let () =
     Epoll.epoll_wait ~timeout_ms:(-1) epoll;
     Epoll.iter epoll (fun fd _io_events ->
         if fd = server_fd then (
-          let client_fd, client_addr = Unix.accept ~cloexec:true server_fd in
+          let client_fd, client_addr = Epoll.accept4 ~cloexec:true server_fd in
           Format.(
             fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
 

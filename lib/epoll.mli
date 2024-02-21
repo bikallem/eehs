@@ -28,3 +28,8 @@ val modify : t -> Unix.file_descr -> Io_events.t -> unit
 val remove : t -> Unix.file_descr -> unit
 val epoll_wait : ?timeout_ms:int -> t -> unit
 val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
+
+(** Network API *)
+
+val accept4 :
+  ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
