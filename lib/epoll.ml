@@ -114,6 +114,7 @@ let remove t fd : unit =
 let epoll_wait ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
   let ready = caml_epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
+  if ready = -1 then Error.raise_syscall_error "epoll_wait";
   t.num_ready_events <- ready
 
 let ready_fd epoll_events i =

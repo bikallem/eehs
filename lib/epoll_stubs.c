@@ -136,9 +136,6 @@ caml_read(value vfd, value v_buf, intnat offset, intnat len)
   assert(len >= 0);
 
   ret = (intnat)read(Int_val(vfd), Bytes_val(v_buf) + offset, len);
-  if (ret == -1)
-    return -(errno);
-
   return ret;
 }
 
