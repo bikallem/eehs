@@ -28,7 +28,8 @@ external caml_epoll_ctl :
   (Op.t[@untagged]) ->
   Unix.file_descr ->
   (int[@untagged]) ->
-  unit = "caml_epoll_ctl_byte" "caml_epoll_ctl"
+  (int[@untagged]) = "caml_epoll_ctl_byte" "caml_epoll_ctl"
+[@@noalloc]
 
 external caml_epoll_wait :
   (epoll_fd[@untagged]) ->
@@ -97,9 +98,17 @@ let create maxevents =
     num_ready_events = 0;
   }
 
-let add t fd io_events = caml_epoll_ctl t.epollfd Op.op_add fd io_events
-let modify t fd io_events = caml_epoll_ctl t.epollfd Op.op_mod fd io_events
-let remove t fd : unit = caml_epoll_ctl t.epollfd Op.op_del fd 0
+let add t fd io_events =
+  if caml_epoll_ctl t.epollfd Op.op_add fd io_events = -1 then
+    Error.raise_syscall_error "epoll_ctl"
+
+let modify t fd io_events =
+  if caml_epoll_ctl t.epollfd Op.op_mod fd io_events = -1 then
+    Error.raise_syscall_error "epoll_ctl"
+
+let remove t fd : unit =
+  if caml_epoll_ctl t.epollfd Op.op_del fd 0 = -1 then
+    Error.raise_syscall_error "epoll_ctl"
 
 let epoll_wait ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;

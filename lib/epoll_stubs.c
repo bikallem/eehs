@@ -42,7 +42,7 @@ caml_epoll_create1_byte(void)
   CAMLreturn(Val_int(ret));
 }
 
-value
+intnat
 caml_epoll_ctl(intnat epollfd, intnat op, value vfd, intnat flags)
 {
   CAMLparam1(vfd);
@@ -54,18 +54,16 @@ caml_epoll_ctl(intnat epollfd, intnat op, value vfd, intnat flags)
   evt.events = flags;
   evt.data.fd = fd;
 
-  if (epoll_ctl(epollfd, op, fd, &evt) == -1)
-    caml_uerror("epoll_ctl", Nothing);
-
-  CAMLreturn(Val_unit);
+  return epoll_ctl(epollfd, op, fd, &evt);
 }
 
 value
 caml_epoll_ctl_byte(value vepollfd, value vop, value vfd, value vflags)
 {
   CAMLparam4(vepollfd, vop, vfd, vflags);
-  CAMLreturn(
-    caml_epoll_ctl(Int_val(vepollfd), Int_val(vop), vfd, Int_val(vflags)));
+  intnat ret =
+    caml_epoll_ctl(Int_val(vepollfd), Int_val(vop), vfd, Int_val(vflags));
+  CAMLreturn(Val_int(ret));
 }
 
 intnat
