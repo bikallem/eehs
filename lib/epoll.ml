@@ -23,8 +23,12 @@ external caml_epoll_create : unit -> (epoll_fd[@untagged])
   = "caml_epoll_create1_byte" "caml_epoll_create1"
 [@@noalloc]
 
-external caml_epoll_ctl : epoll_fd -> Op.t -> Unix.file_descr -> int -> unit
-  = "caml_epoll_ctl"
+external caml_epoll_ctl :
+  (epoll_fd[@untagged]) ->
+  (Op.t[@untagged]) ->
+  Unix.file_descr ->
+  (int[@untagged]) ->
+  unit = "caml_epoll_ctl_byte" "caml_epoll_ctl"
 
 external caml_epoll_wait :
   (epoll_fd[@untagged]) ->
@@ -92,10 +96,7 @@ let create maxevents =
     num_ready_events = 0;
   }
 
-let add t fd io_events =
-  Unix.set_nonblock fd;
-  caml_epoll_ctl t.epollfd Op.op_add fd io_events
-
+let add t fd io_events = caml_epoll_ctl t.epollfd Op.op_add fd io_events
 let modify t fd io_events = caml_epoll_ctl t.epollfd Op.op_mod fd io_events
 let remove t fd : unit = caml_epoll_ctl t.epollfd Op.op_del fd 0
 
