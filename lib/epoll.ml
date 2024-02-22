@@ -19,11 +19,11 @@ end
 
 (* epoll syscalls *)
 
-external epoll_create : unit -> (epoll_fd[@untagged])
+external caml_epoll_create : unit -> (epoll_fd[@untagged])
   = "caml_epoll_create1_byte" "caml_epoll_create1"
 [@@noalloc]
 
-external epoll_ctl : epoll_fd -> Op.t -> Unix.file_descr -> int -> unit
+external caml_epoll_ctl : epoll_fd -> Op.t -> Unix.file_descr -> int -> unit
   = "caml_epoll_ctl"
 
 external caml_epoll_wait :
@@ -86,7 +86,7 @@ type t = {
 
 let create maxevents =
   {
-    epollfd = epoll_create ();
+    epollfd = caml_epoll_create ();
     maxevents;
     epoll_events = Base_bigstring.create (Config.sizeof_epoll_event * maxevents);
     num_ready_events = 0;
@@ -94,10 +94,10 @@ let create maxevents =
 
 let add t fd io_events =
   Unix.set_nonblock fd;
-  epoll_ctl t.epollfd Op.op_add fd io_events
+  caml_epoll_ctl t.epollfd Op.op_add fd io_events
 
-let modify t fd io_events = epoll_ctl t.epollfd Op.op_mod fd io_events
-let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
+let modify t fd io_events = caml_epoll_ctl t.epollfd Op.op_mod fd io_events
+let remove t fd : unit = caml_epoll_ctl t.epollfd Op.op_del fd 0
 
 let epoll_wait ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
