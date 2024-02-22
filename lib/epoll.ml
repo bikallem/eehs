@@ -95,6 +95,7 @@ type t = {
 
 let create maxevents =
   {
+    (* TODO check for error *)
     epollfd = caml_epoll_create ();
     maxevents;
     epoll_events = Base_bigstring.create (Config.sizeof_epoll_event * maxevents);
