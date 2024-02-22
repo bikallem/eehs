@@ -4,7 +4,7 @@ type maxevents = int
 type epoll_fd
 
 module Op : sig
-  type t
+  type t = int
 
   val op_add : t
   val op_mod : t

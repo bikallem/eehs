@@ -1,6 +1,6 @@
 (** [Io_events] is a set of Input/Output events that is monitored by epoll. *)
 module Io_events : sig
-  type t
+  type t = private int
 
   val read : t
   (** [read] is [t] which contains EPOLLIN event. *)
