@@ -70,16 +70,16 @@ module Io_events = struct
   let read = Config.epollin
   let write = Config.epollout
   let rw = read + write
-  let is_readable t = t land Config.epollin = t
-  let is_writable t = t land Config.epollout = t
+  let readable t = t land Config.epollin = t
+  let writable t = t land Config.epollout = t
 
-  let is_read_closed t =
-    t land Config.epollhup = t || (is_readable t && t land Config.epollrdhup = t)
+  let read_closed t =
+    t land Config.epollhup = t || (readable t && t land Config.epollrdhup = t)
 
-  let is_write_closed t =
-    t land Config.epollhup = t || (is_writable t && t land Config.epollrdhup = t)
+  let write_closed t =
+    t land Config.epollhup = t || (writable t && t land Config.epollrdhup = t)
 
-  let is_error t = t land Config.epollerr = t
+  let error t = t land Config.epollerr = t
 end
 
 type t = {
