@@ -1,11 +1,14 @@
 #define _GNU_SOURCE
+#include <assert.h>
 #include <caml/alloc.h>
 #include <caml/bigarray.h>
 #include <caml/fail.h>
 #include <caml/memory.h>
 #include <caml/mlvalues.h>
 #include <caml/socketaddr.h>
+#include <caml/threads.h>
 #include <caml/unixsupport.h>
+#include <errno.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -54,9 +57,9 @@ caml_epoll_wait(value v_epollfd,
   if (0 == timeout) {
     retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
   } else {
-    caml_enter_blocking_section();
+    caml_release_runtime_system();
     retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
-    caml_leave_blocking_section();
+    caml_acquire_runtime_system();
   }
 
   if (-1 == retcode)
@@ -91,15 +94,21 @@ caml_accept4(value v_cloexec, value v_fd)
 }
 
 value
-caml_read(value vfd, value vbuf, value vofs, value vlen)
+caml_read(value v_fd, value v_buf, value v_ofs, value v_len)
 {
-  CAMLparam4(vfd, vbuf, vofs, vlen);
-  int offset, ret;
+  CAMLparam4(v_fd, v_buf, v_ofs, v_len);
+  int ret, offset, len;
 
-  offset = Int_val(vofs);
-  ret = read(Int_val(vfd), Bytes_val(vbuf) + offset, Int_val(vlen));
+  offset = Int_val(v_ofs);
+  len = Int_val(v_len);
+
+  assert(offset >= 0);
+  assert(offset <= (caml_string_length(v_buf) - len));
+  assert(len >= 0);
+
+  ret = read(Int_val(v_fd), Bytes_val(v_buf) + offset, len);
   if (ret == -1)
-    caml_uerror("read", Nothing);
+    ret = -(errno);
 
   CAMLreturn(Val_int(ret));
 }

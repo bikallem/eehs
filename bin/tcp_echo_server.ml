@@ -7,13 +7,19 @@ let pp_sockaddr fmt = function
 
 let clientfd_cb (epoll : Epoll.t) (_ : Unix.sockaddr)
     (client_fd, (_ : Epoll.Io_events.t)) =
-  let buflen = 1024 in
+  let buflen = 6 in
   let buf = Bytes.create buflen in
-  match Epoll.read client_fd buf 0 buflen with
+  let offset = 0 in
+  match Epoll.read client_fd buf offset (buflen - offset) with
   | got when got = 0 ->
     Epoll.remove epoll client_fd;
     Unix.close client_fd
-  | got -> ignore (Unix.write client_fd buf 0 got : int)
+  | got ->
+    Printf.printf "\ngot: %d, %S%!" got (Bytes.unsafe_to_string buf);
+    ignore (Unix.write client_fd buf offset got : int);
+
+    let ret = Epoll.read client_fd buf offset (buflen - offset) in
+    Printf.printf "\nret: %d%!" ret
   | exception Unix.Unix_error ((EAGAIN | EWOULDBLOCK), _, _) -> ()
 
 let serverfd_cb (epoll : Epoll.t) fdcb (server_fd, (_ : Epoll.Io_events.t)) =

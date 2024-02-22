@@ -31,13 +31,15 @@ external accept4 :
   ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
   = "caml_accept4"
 
-external unsafe_read : Unix.file_descr -> bytes -> int -> int -> int
-  = "caml_read"
+external read : Unix.file_descr -> bytes -> int -> int -> int = "caml_read"
+[@@noalloc]
+(* external unsafe_write : Unix.file_descr -> string -> int -> int -> int *)
+(*   = "caml_write" *)
 
-let read fd buf ofs len =
-  if ofs < 0 || len < 0 || ofs > Bytes.length buf - len then
-    invalid_arg "Epoll.read"
-  else unsafe_read fd buf ofs len
+(* let write fd s ofs len = *)
+(*   if ofs < 0 || len < 0 || ofs > String.length s - len then *)
+(*     invalid_arg "Epoll.write" *)
+(*   else unsafe_write fd s ofs len *)
 
 module Io_events = struct
   type t = int
