@@ -90,9 +90,10 @@ type t = {
 }
 
 let create maxevents =
+  let epollfd = caml_epoll_create () in
+  if epollfd = -1 then Error.raise_syscall_error "epoll_create1";
   {
-    (* TODO check for error *)
-    epollfd = caml_epoll_create ();
+    epollfd;
     maxevents;
     epoll_events = Base_bigstring.create (Config.sizeof_epoll_event * maxevents);
     num_ready_events = 0;
