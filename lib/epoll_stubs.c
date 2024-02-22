@@ -16,6 +16,19 @@
 #define _st_uint8(v) ((const uint8_t*)(String_val(v)))
 
 intnat
+caml_errno(void)
+{
+  return (intnat)errno;
+}
+
+value
+caml_errno_byte(void)
+{
+  CAMLparam0();
+  CAMLreturn(Val_int(caml_errno));
+}
+
+intnat
 caml_epoll_create1(void)
 {
   intnat epollfd = (intnat)epoll_create1(EPOLL_CLOEXEC);
