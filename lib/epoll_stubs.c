@@ -93,22 +93,27 @@ caml_accept4(value v_cloexec, value v_fd)
   CAMLreturn(res);
 }
 
-value
-caml_read(value v_fd, value v_buf, value v_ofs, value v_len)
+intnat
+caml_read(value vfd, value v_buf, intnat offset, intnat len)
 {
-  CAMLparam4(v_fd, v_buf, v_ofs, v_len);
-  int ret, offset, len;
-
-  offset = Int_val(v_ofs);
-  len = Int_val(v_len);
+  CAMLparam2(vfd, v_buf);
+  intnat ret;
 
   assert(offset >= 0);
   assert(offset <= (caml_string_length(v_buf) - len));
   assert(len >= 0);
 
-  ret = read(Int_val(v_fd), Bytes_val(v_buf) + offset, len);
+  ret = (intnat)read(Int_val(vfd), Bytes_val(v_buf) + offset, len);
   if (ret == -1)
-    ret = -(errno);
+    return -(errno);
 
+  return ret;
+}
+
+value
+caml_read_byte(value v_fd, value v_buf, value v_ofs, value v_len)
+{
+  CAMLparam4(v_fd, v_buf, v_ofs, v_len);
+  intnat ret = caml_read(v_fd, v_buf, Int_val(v_ofs), Int_val(v_len));
   CAMLreturn(Val_int(ret));
 }

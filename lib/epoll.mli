@@ -38,5 +38,12 @@ val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
 val accept4 :
   ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
 
-val read : Unix.file_descr -> bytes -> int -> int -> int [@@noalloc]
+external read :
+  Unix.file_descr ->
+  bytes ->
+  (int[@untagged]) ->
+  (int[@untagged]) ->
+  (int[@untagged]) = "caml_read_byte" "caml_read"
+[@@noalloc]
+
 (* val write : Unix.file_descr -> string -> int -> int -> int *)

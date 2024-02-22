@@ -31,8 +31,14 @@ external accept4 :
   ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
   = "caml_accept4"
 
-external read : Unix.file_descr -> bytes -> int -> int -> int = "caml_read"
+external read :
+  Unix.file_descr ->
+  bytes ->
+  (int[@untagged]) ->
+  (int[@untagged]) ->
+  (int[@untagged]) = "caml_read_byte" "caml_read"
 [@@noalloc]
+
 (* external unsafe_write : Unix.file_descr -> string -> int -> int -> int *)
 (*   = "caml_write" *)
 
