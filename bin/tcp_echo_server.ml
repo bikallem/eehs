@@ -23,7 +23,7 @@ let clientfd_cb (epoll : Epoll.t) (_ : Unix.sockaddr)
   | exception Unix.Unix_error ((EAGAIN | EWOULDBLOCK), _, _) -> ()
 
 let serverfd_cb (epoll : Epoll.t) fdcb (server_fd, (_ : Epoll.Io_events.t)) =
-  let client_fd, client_addr = Epoll.accept4 ~cloexec:true server_fd in
+  let client_fd, client_addr = Epoll.accept4 server_fd in
 
   Format.(fprintf std_formatter "\nConnected to %a%!" pp_sockaddr client_addr);
 

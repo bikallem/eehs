@@ -35,8 +35,7 @@ external file_descr_of_int : int -> Unix.file_descr = "%identity"
 
 (* IO syscalls *)
 
-external accept4 :
-  ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+external accept4 : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
   = "caml_accept4"
 
 external read :

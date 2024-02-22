@@ -81,23 +81,22 @@ caml_epoll_wait_byte(value vepollfd,
 }
 
 value
-caml_accept4(value v_cloexec, value v_fd)
+caml_accept4(value vfd)
 {
-  CAMLparam2(v_cloexec, v_fd);
+  CAMLparam1(vfd);
   CAMLlocal1(a);
   int flags;
   int retcode;
   value res;
   union sock_addr_union addr;
   socklen_param_type addr_len;
-  int clo = caml_unix_cloexec_p(v_cloexec);
 
   addr_len = sizeof(addr);
-  flags = SOCK_NONBLOCK;
-  retcode = accept4(
-    Int_val(v_fd), &addr.s_gen, &addr_len, clo ? SOCK_CLOEXEC | flags : flags);
+  flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
+  retcode = accept4(Int_val(vfd), &addr.s_gen, &addr_len, flags);
   if (retcode == -1)
     caml_uerror("accept4", Nothing);
+
   a = caml_unix_alloc_sockaddr(&addr, addr_len, retcode);
   res = caml_alloc_small(2, 0);
   Field(res, 0) = Val_int(retcode);

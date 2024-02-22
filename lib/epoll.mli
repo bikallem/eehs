@@ -35,8 +35,8 @@ val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
 
 (** IO *)
 
-val accept4 :
-  ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+external accept4 : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+  = "caml_accept4"
 
 external read :
   Unix.file_descr ->
