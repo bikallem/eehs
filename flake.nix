@@ -134,6 +134,8 @@
           pkgs.netcat
           pkgs.rlwrap
           pkgs.clang-tools
+          pkgs.moreutils
+          pkgs.cling
         ];
       };
     });
