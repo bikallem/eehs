@@ -15,14 +15,22 @@
 
 #define _st_uint8(v) ((const uint8_t*)(String_val(v)))
 
-value
+intnat
 caml_epoll_create1(void)
 {
-  int epoll_fd = epoll_create1(EPOLL_CLOEXEC);
-  if (epoll_fd == -1)
-    caml_uerror("epoll_create1", Nothing);
+  intnat epollfd = (intnat)epoll_create1(EPOLL_CLOEXEC);
+  if (epollfd == -1)
+    return -(errno);
 
-  return Val_int(epoll_fd);
+  return epollfd;
+}
+
+value
+caml_epoll_create1_byte(void)
+{
+  CAMLparam0();
+  intnat ret = caml_epoll_create1();
+  CAMLreturn(Val_int(ret));
 }
 
 value
@@ -64,7 +72,6 @@ caml_epoll_wait(intnat epollfd,
   if (-1 == ret)
     return -(errno);
 
-  /* caml_uerror("epoll_wait", Nothing); */
   return ret;
 }
 

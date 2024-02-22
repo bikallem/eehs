@@ -19,7 +19,9 @@ end
 
 (* epoll syscalls *)
 
-external epoll_create : unit -> epoll_fd = "caml_epoll_create1"
+external epoll_create : unit -> (epoll_fd[@untagged])
+  = "caml_epoll_create1_byte" "caml_epoll_create1"
+[@@noalloc]
 
 external epoll_ctl : epoll_fd -> Op.t -> Unix.file_descr -> int -> unit
   = "caml_epoll_ctl"
