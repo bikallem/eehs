@@ -1,7 +1,7 @@
 type epoll_events = Base_bigstring.t
 type timeout_ms = int
 type maxevents = int
-type epoll_fd
+type epoll_fd = int
 
 module Op : sig
   type t = int
@@ -17,15 +17,23 @@ end = struct
   let op_del = Config.epoll_ctl_del
 end
 
+(* epoll syscalls *)
+
 external epoll_create : unit -> epoll_fd = "caml_epoll_create1"
 
 external epoll_ctl : epoll_fd -> Op.t -> Unix.file_descr -> int -> unit
   = "caml_epoll_ctl"
 
-external epoll_wait : epoll_fd -> epoll_events -> maxevents -> timeout_ms -> int
-  = "caml_epoll_wait"
+external caml_epoll_wait :
+  (epoll_fd[@untagged]) ->
+  epoll_events ->
+  (maxevents[@untagged]) ->
+  (timeout_ms[@untagged]) ->
+  (int[@untagged]) = "caml_epoll_wait_byte" "caml_epoll_wait"
 
 external file_descr_of_int : int -> Unix.file_descr = "%identity"
+
+(* IO syscalls *)
 
 external accept4 :
   ?cloexec:bool -> Unix.file_descr -> Unix.file_descr * Unix.sockaddr
@@ -92,7 +100,7 @@ let remove t fd : unit = epoll_ctl t.epollfd Op.op_del fd 0
 
 let epoll_wait ?(timeout_ms = 0) (t : t) =
   t.num_ready_events <- 0;
-  let ready = epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
+  let ready = caml_epoll_wait t.epollfd t.epoll_events t.maxevents timeout_ms in
   t.num_ready_events <- ready
 
 let ready_fd epoll_events i =

@@ -25,7 +25,7 @@ caml_epoll_create1(void)
   return Val_int(epoll_fd);
 }
 
-void
+value
 caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
 {
   CAMLparam4(v_epollfd, v_op, v_fd, v_flags);
@@ -38,34 +38,46 @@ caml_epoll_ctl(value v_epollfd, value v_op, value v_fd, value v_flags)
   if (epoll_ctl(Int_val(v_epollfd), Int_val(v_op), Int_val(v_fd), &evt) == -1)
     caml_uerror("epoll_ctl", Nothing);
 
-  CAMLreturn0;
+  CAMLreturn(Val_unit);
 }
 
-value
-caml_epoll_wait(value v_epollfd,
-                value v_epoll_events,
-                value v_maxevents,
-                value v_timeout_ms)
+intnat
+caml_epoll_wait(intnat epollfd,
+                value vepollevents,
+                intnat maxevents,
+                intnat timeout)
 {
-  CAMLparam4(v_epollfd, v_epoll_events, v_maxevents, v_timeout_ms);
+  CAMLparam1(vepollevents);
   struct epoll_event* ev;
-  int retcode, timeout;
+  int ret;
 
-  timeout = Int_val(v_timeout_ms);
-  ev = (struct epoll_event*)Caml_ba_data_val(v_epoll_events);
+  ev = (struct epoll_event*)Caml_ba_data_val(vepollevents);
 
   if (0 == timeout) {
-    retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
+    ret = epoll_wait(epollfd, ev, maxevents, timeout);
   } else {
     caml_release_runtime_system();
-    retcode = epoll_wait(Int_val(v_epollfd), ev, Int_val(v_maxevents), timeout);
+    ret = epoll_wait(epollfd, ev, maxevents, timeout);
     caml_acquire_runtime_system();
   }
 
-  if (-1 == retcode)
-    caml_uerror("epoll_wait", Nothing);
+  if (-1 == ret)
+    return -(errno);
 
-  CAMLreturn(Val_int(retcode));
+  /* caml_uerror("epoll_wait", Nothing); */
+  return ret;
+}
+
+value
+caml_epoll_wait_byte(value vepollfd,
+                     value vepollevents,
+                     value vmaxevents,
+                     value vtimeout)
+{
+  CAMLparam4(vepollfd, vepollevents, vmaxevents, vtimeout);
+  intnat ret = caml_epoll_wait(
+    Int_val(vepollfd), vepollevents, Int_val(vmaxevents), Int_val(vtimeout));
+  CAMLreturn(Val_int(ret));
 }
 
 value
