@@ -31,11 +31,7 @@ caml_errno_byte(void)
 intnat
 caml_epoll_create1(void)
 {
-  intnat epollfd = (intnat)epoll_create1(EPOLL_CLOEXEC);
-  if (epollfd == -1)
-    return -(errno);
-
-  return epollfd;
+  return (intnat)epoll_create1(EPOLL_CLOEXEC);
 }
 
 value
