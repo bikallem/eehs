@@ -88,9 +88,6 @@ caml_epoll_wait(intnat epollfd,
     caml_acquire_runtime_system();
   }
 
-  if (-1 == ret)
-    return -(errno);
-
   return ret;
 }
 
