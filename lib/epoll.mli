@@ -35,9 +35,6 @@ val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
 
 (** IO *)
 
-external caml_errno : unit -> (int[@untagged]) = "caml_errno_byte" "caml_errno"
-[@@noalloc]
-
 external accept4 : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
   = "caml_accept4"
 

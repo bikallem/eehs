@@ -17,11 +17,6 @@ end = struct
   let op_del = Config.epoll_ctl_del
 end
 
-(* util syscalls *)
-
-external caml_errno : unit -> (int[@untagged]) = "caml_errno_byte" "caml_errno"
-[@@noalloc]
-
 (* epoll syscalls *)
 
 external caml_epoll_create : unit -> (epoll_fd[@untagged])
