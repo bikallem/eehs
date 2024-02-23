@@ -48,8 +48,14 @@ caml_epoll_ctl(intnat epollfd, intnat op, value vfd, intnat flags)
   CAMLparam1(vfd);
   struct epoll_event evt;
   int fd;
-
   fd = Int_val(vfd);
+
+  /* printf("\nepoll_ctl: fd %d read:%b, write:%b", */
+  /*        fd, */
+  /*        ((flags & EPOLLIN) == EPOLLIN), */
+  /*        ((flags & EPOLLOUT) == EPOLLOUT)); */
+  /* fflush(stdout); */
+
   evt.data.ptr = NULL;
   evt.events = flags;
   evt.data.fd = fd;
@@ -73,18 +79,28 @@ caml_epoll_wait(intnat epollfd,
                 intnat timeout)
 {
   CAMLparam1(vepollevents);
-  struct epoll_event* ev;
+  struct epoll_event* events;
   int ret;
 
-  ev = (struct epoll_event*)Caml_ba_data_val(vepollevents);
+  events = (struct epoll_event*)Caml_ba_data_val(vepollevents);
 
   if (0 == timeout) {
-    ret = epoll_wait(epollfd, ev, maxevents, timeout);
+    ret = epoll_wait(epollfd, events, maxevents, timeout);
   } else {
     caml_release_runtime_system();
-    ret = epoll_wait(epollfd, ev, maxevents, timeout);
+    ret = epoll_wait(epollfd, events, maxevents, timeout);
     caml_acquire_runtime_system();
   }
+
+  /* printf("\nepoll_wait: ret %d", ret); */
+
+  /* if (ret > 0) { */
+  /*   printf("\nepoll_wait: fd %d read %b, write %b", */
+  /*          events[0].data.fd, */
+  /*          ((events[0].events & EPOLLIN) == EPOLLIN), */
+  /*          ((events[0].events & EPOLLOUT) == EPOLLOUT)); */
+  /* } */
+  /* fflush(stdout); */
 
   return ret;
 }

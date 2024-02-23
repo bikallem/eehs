@@ -37,4 +37,4 @@ let err : string array = [|
 
 let raise_syscall_error syscall =
   let errno = caml_errno () in
-  failwith @@ String.concat " " [ syscall; "failed:"; err.(-errno) ]
+  failwith @@ String.concat " " [ syscall; "failed:"; err.(errno) ]
