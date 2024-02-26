@@ -136,6 +136,7 @@
           pkgs.clang-tools
           pkgs.moreutils
           pkgs.cling
+          pkgs.gcc
         ];
       };
     });
