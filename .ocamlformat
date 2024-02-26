@@ -2,3 +2,4 @@ version=0.26.1
 profile=conventional
 cases-exp-indent=2
 parse-docstrings=true
+exp-grouping=preserve
