@@ -12,9 +12,9 @@ module Op : sig
 end = struct
   type t = int
 
-  let op_add = Config.epoll_ctl_add
-  let op_mod = Config.epoll_ctl_mod
-  let op_del = Config.epoll_ctl_del
+  let op_add = Epoll_cfg.epoll_ctl_add
+  let op_mod = Epoll_cfg.epoll_ctl_mod
+  let op_del = Epoll_cfg.epoll_ctl_del
 end
 
 (* epoll syscalls *)
@@ -55,65 +55,6 @@ external read :
 
 let _traceln fmt = Format.(fprintf std_formatter ("\n+" ^^ fmt ^^ "%!"))
 
-(* external caml_accept4_2 : *)
-(*   Unix.file_descr -> flags[@untagged]) -> (int[@untagged]) *)
-(*   = "caml_accept4_2_byte" "caml_accept4_2" *)
-(* [@@noalloc] *)
-
-(* external inet_addr_of_raw_bytes : string -> Unix.inet_addr = "%identity" *)
-
-(* module Sockaddr = struct *)
-(*   type addr = bytes (1* struct sockaddr_storage *1) *)
-(*   type addrlen = int (1* sizeof(addr) *1) *)
-(*   type t = addr * addrlen *)
-
-(* let c_strnlen buf ofs maxlen = *)
-(*   if ofs == maxlen then maxlen *)
-(*   else if Bytes.get_uint8 buf ofs == 0 then ofs + 1 *)
-(*   else c_strnlen buf (ofs + 1) maxlen *)
-
-(* let strlen = ref 0 in *)
-(* for i = 0 to len do *)
-(*   if Bytes.get_uint8 buf i == 0 then *)
-(* done; *)
-(* Bytes.sub_string buf 0 *)
-
-(* let decode_unixdomain_sockaddr (addr, addrlen) = *)
-
-(* let to_sockaddr (addr, _addrlen) = *)
-(*   let ss_family = Bytes.get_int16_le addr Sock_cfg.sa_ss_family_ofs in *)
-(*   if ss_family = Sock_cfg.af_inet then *)
-(*     let inet_addr = *)
-(*       Bytes.sub_string addr Sock_cfg.sin_addr_ofs Sock_cfg.in_addr_sz *)
-(*       |> inet_addr_of_raw_bytes *)
-(*     in *)
-(*     (1* _traceln "sin_port_ofs: %i" Sock_cfg.sin_port_ofs; *1) *)
-(*     let port = Bytes.get_int16_le addr 2 in *)
-(*     Unix.ADDR_INET (inet_addr, port) *)
-(*   else if ss_family = Sock_cfg.af_inet6 then *)
-(*     let inet6_addr = *)
-(*       Bytes.sub_string addr Sock_cfg.sin6_addr_ofs Sock_cfg.in6_addr_sz *)
-(*       |> inet_addr_of_raw_bytes *)
-(*     in *)
-(*     let port = Bytes.get_int16_le addr Sock_cfg.sin6_port_ofs in *)
-(*     Unix.ADDR_INET (inet6_addr, port) *)
-(*   else raise @@ Unix.(Unix_error (EAFNOSUPPORT, "", "")) *)
-(* end *)
-
-(* let accept4_2 fd = *)
-(*   let addrlen = Sock_cfg.sockaddr_storage_sz in *)
-(*   let sockaddr = Bytes.make addrlen '\000' in *)
-(*   let addrlen_ref = Bytes.make Sock_cfg.socklen_t_sz '\000' in *)
-(*   Bytes.set_int32_le addrlen_ref 0 (Int32.of_int addrlen); *)
-(*   let flags = Sock_cfg.(sock_nonblock lor sock_cloexec) in *)
-(*   let ret = caml_accept4_2 fd sockaddr addrlen_ref flags in *)
-(*   if ret = -1 then raise @@ Error.raise_syscall_error "accept4" *)
-(*   else *)
-(*     let fd = file_descr_of_int ret in *)
-(*     let addrlen = Bytes.get_int32_le addrlen_ref 0 in *)
-(*     _traceln "addrlen %li" addrlen; *)
-(*     (fd, (sockaddr, Int32.to_int addrlen)) *)
-
 (* external unsafe_write : Unix.file_descr -> string -> int -> int -> int *)
 (*   = "caml_write" *)
 
@@ -128,19 +69,21 @@ module Io_events = struct
   let add = ( lor )
   let ( + ) = add
   let remove a b = a land lnot b
-  let read = Config.epollin
-  let write = Config.epollout
+  let read = Epoll_cfg.epollin
+  let write = Epoll_cfg.epollout
   let rw = read lor write
-  let readable t = t land Config.epollin = Config.epollin
-  let writable t = t land Config.epollout = Config.epollout
+  let readable t = t land Epoll_cfg.epollin = Epoll_cfg.epollin
+  let writable t = t land Epoll_cfg.epollout = Epoll_cfg.epollout
 
   let read_closed t =
-    t land Config.epollhup = t || (readable t && t land Config.epollrdhup = t)
+    t land Epoll_cfg.epollhup = t
+    || (readable t && t land Epoll_cfg.epollrdhup = t)
 
   let write_closed t =
-    t land Config.epollhup = t || (writable t && t land Config.epollrdhup = t)
+    t land Epoll_cfg.epollhup = t
+    || (writable t && t land Epoll_cfg.epollrdhup = t)
 
-  let error t = t land Config.epollerr = t
+  let error t = t land Epoll_cfg.epollerr = t
 end
 
 type t = {
@@ -156,7 +99,7 @@ let create maxevents =
   {
     epollfd;
     maxevents;
-    epoll_events = Base_bigstring.create (Config.sizeof_epoll_event * maxevents);
+    epoll_events = Base_bigstring.create (Epoll_cfg.epoll_event_sz * maxevents);
     num_ready_events = 0;
   }
 
@@ -180,12 +123,12 @@ let epoll_wait ?(timeout_ms = 0) (t : t) =
 
 let ready_fd epoll_events i =
   Base_bigstring.unsafe_get_int32_le epoll_events
-    ~pos:((i * Config.sizeof_epoll_event) + Config.offsetof_epoll_fd)
+    ~pos:((i * Epoll_cfg.epoll_event_sz) + Epoll_cfg.epoll_event_data_fd)
   |> file_descr_of_int
 
 let io_events epoll_events i =
   Base_bigstring.unsafe_get_int32_le epoll_events
-    ~pos:(i * Config.sizeof_epoll_event * Config.offsetof_epoll_events)
+    ~pos:(i * Epoll_cfg.epoll_event_sz * Epoll_cfg.epoll_event_events)
 
 let iter t f =
   for i = 0 to t.num_ready_events - 1 do

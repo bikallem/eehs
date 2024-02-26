@@ -56,7 +56,7 @@ let server_cb (epoll : Epoll.t) (fdcb : (Unix.file_descr, callback) Hashtbl.t)
     let ret, addr = Epoll.accept4 server_fd in
     if ret = -1 then begin
       let errno = Error.caml_errno () in
-      if errno = Err_config.eagain || errno = Err_config.ewouldblock then ()
+      if errno = Err_cfg.eagain || errno = Err_cfg.ewouldblock then ()
       else Error.raise_syscall_error "accept4"
     end
     else

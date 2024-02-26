@@ -36,11 +36,10 @@ let gen_socket_config c =
       | "offsetof(struct sockaddr_in, sin_addr)" -> "sin_addr_ofs"
       | "offsetof(struct sockaddr_in6, sin6_port)" -> "sin6_port_ofs"
       | "offsetof(struct sockaddr_in6, sin6_addr)" -> "sin6_addr_ofs"
-      | name -> name
+      | name -> String.lowercase_ascii name
     in
-    let v = match v with Value.Int i -> i | _ -> assert false in
-    String.concat " "
-      [ "let"; String.lowercase_ascii name; "="; string_of_int v ]
+    let v = match v with Value.Int i -> string_of_int i | _ -> assert false in
+    String.concat " " [ "let"; name; "="; v ]
   in
   let ml_defs = List.map map_to_ml defs in
   C.Flags.write_lines "sock_cfg.ml" ml_defs
@@ -58,65 +57,49 @@ let gen_error_config c =
     | _ -> assert false
   in
   let ml_defs = List.map map_to_ml defs in
-  C.Flags.write_lines "err_config.ml" ml_defs
+  C.Flags.write_lines "err_cfg.ml" ml_defs
+
+let gen_epoll_config c =
+  let open C.C_define in
+  let defs =
+    (* Events flags for epoll_wait(). https://man7.org/linux/man-pages/man2/epoll_ctl.2.html *)
+    C.C_define.import c ~c_flags
+      ~includes:[ "sys/epoll.h"; "stddef.h" ]
+      [
+        ("EPOLL_CTL_ADD", Type.Int);
+        ("EPOLL_CTL_MOD", Int);
+        ("EPOLL_CTL_DEL", Int);
+        ("EPOLLIN", Int);
+        ("EPOLLOUT", Int);
+        ("EPOLLRDHUP", Int);
+        ("EPOLLPRI", Int);
+        ("EPOLLERR", Int);
+        ("EPOLLHUP", Int);
+        ("EPOLLET", Int);
+        ("EPOLLONESHOT", Int);
+        ("EPOLLWAKEUP", Int);
+        ("EPOLLEXCLUSIVE", Int);
+        ("offsetof(struct epoll_event, data.fd)", Int);
+        ("offsetof(struct epoll_event, events)", Int);
+        ("sizeof(struct epoll_event)", Int);
+      ]
+  in
+  let map_to_ml (name, v) =
+    let name =
+      match name with
+      | "offsetof(struct epoll_event, data.fd)" -> "epoll_event_data_fd"
+      | "offsetof(struct epoll_event, events)" -> "epoll_event_events"
+      | "sizeof(struct epoll_event)" -> "epoll_event_sz"
+      | name -> String.lowercase_ascii name
+    in
+    let v = match v with Value.Int i -> string_of_int i | _ -> assert false in
+    String.concat " " [ "let"; name; "="; v ]
+  in
+  let defs = List.map map_to_ml defs in
+  C.Flags.write_lines "epoll_cfg.ml" defs
 
 let () =
-  let import c =
-    C.C_define.import c ~c_flags:[ "-D_GNU_SOURCE" ]
-      ~includes:[ "sys/epoll.h"; "stddef.h"; "errno.h"; "sys/socket.h" ]
-  in
   C.main ~name:"configure" (fun c ->
-      let defs =
-        import c
-          C.C_define.Type.
-            [
-              ("EPOLL_CTL_ADD", Int);
-              ("EPOLL_CTL_MOD", Int);
-              ("EPOLL_CTL_DEL", Int);
-              (* Events flags for epoll_wait(). https://man7.org/linux/man-pages/man2/epoll_ctl.2.html *)
-              ("EPOLLIN", Int);
-              ("EPOLLOUT", Int);
-              ("EPOLLRDHUP", Int);
-              ("EPOLLPRI", Int);
-              ("EPOLLERR", Int);
-              ("EPOLLHUP", Int);
-              ("EPOLLET", Int);
-              ("EPOLLONESHOT", Int);
-              ("EPOLLWAKEUP", Int);
-              ("EPOLLEXCLUSIVE", Int);
-            ]
-        |> List.map (function
-             | name, C.C_define.Value.Int v ->
-               Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
-             | _ -> assert false)
-      in
-      let sizeofs =
-        import c
-          C.C_define.Type.
-            [
-              ("offsetof(struct epoll_event, data.fd)", Int);
-              ("offsetof(struct epoll_event, events)", Int);
-              ("sizeof(struct epoll_event)", Int);
-            ]
-        |> List.map (function
-             | name, C.C_define.Value.Int v ->
-               let name =
-                 match name with
-                 | "offsetof(struct epoll_event, data.fd)" ->
-                   "offsetof_epoll_fd"
-                 | "offsetof(struct epoll_event, events)" ->
-                   "offsetof_epoll_events"
-                 | "sizeof(struct epoll_event)" -> "sizeof_epoll_event"
-                 | "sizeof(struct sockaddr_storage)" ->
-                   "socket_sockaddr_storage_len"
-                 | "offsetof(struct sockaddr_storage, ss_family)" ->
-                   "offsetof_sa_storage_ss_family"
-                 | _ -> assert false
-               in
-               Printf.sprintf "let %s = 0x%x" (String.lowercase_ascii name) v
-             | _ -> assert false)
-      in
+      gen_epoll_config c;
       gen_socket_config c;
-      gen_error_config c;
-      let lines = defs @ sizeofs in
-      C.Flags.write_lines "config.ml" lines)
+      gen_error_config c)

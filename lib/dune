@@ -8,6 +8,6 @@
  (libraries unix cstruct base_bigstring))
 
 (rule
- (targets config.ml sock_cfg.ml err_config.ml)
+ (targets epoll_cfg.ml sock_cfg.ml err_cfg.ml)
  (action
   (run ./configure/configure.exe)))
