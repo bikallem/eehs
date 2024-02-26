@@ -9,6 +9,8 @@
 #include <caml/threads.h>
 #include <caml/unixsupport.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <string.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -50,12 +52,6 @@ caml_epoll_ctl(intnat epollfd, intnat op, value vfd, intnat flags)
   int fd;
   fd = Int_val(vfd);
 
-  /* printf("\nepoll_ctl: fd %d read:%b, write:%b", */
-  /*        fd, */
-  /*        ((flags & EPOLLIN) == EPOLLIN), */
-  /*        ((flags & EPOLLOUT) == EPOLLOUT)); */
-  /* fflush(stdout); */
-
   evt.data.ptr = NULL;
   evt.events = flags;
   evt.data.fd = fd;
@@ -91,17 +87,6 @@ caml_epoll_wait(intnat epollfd,
     ret = epoll_wait(epollfd, events, maxevents, timeout);
     caml_acquire_runtime_system();
   }
-
-  /* printf("\nepoll_wait: ret %d", ret); */
-
-  /* if (ret > 0) { */
-  /*   printf("\nepoll_wait: fd %d read %b, write %b", */
-  /*          events[0].data.fd, */
-  /*          ((events[0].events & EPOLLIN) == EPOLLIN), */
-  /*          ((events[0].events & EPOLLOUT) == EPOLLOUT)); */
-  /* } */
-  /* fflush(stdout); */
-
   return ret;
 }
 
@@ -129,15 +114,17 @@ caml_accept4(value vfd)
   socklen_param_type addr_len;
 
   addr_len = sizeof(addr);
-  flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
+  flags = SOCK_NONBLOCK | SOCK_CLOEXEC; // TODO make this a parameter?
   retcode = accept4(Int_val(vfd), &addr.s_gen, &addr_len, flags);
-  if (retcode == -1)
-    caml_uerror("accept4", Nothing);
-
-  a = caml_unix_alloc_sockaddr(&addr, addr_len, retcode);
   res = caml_alloc_small(2, 0);
-  Field(res, 0) = Val_int(retcode);
-  Field(res, 1) = a;
+  if (retcode == -1) {
+    Field(res, 0) = Val_int(retcode);
+    Field(res, 1) = Val_none;
+  } else {
+    a = caml_unix_alloc_sockaddr(&addr, addr_len, retcode);
+    Field(res, 0) = Val_int(retcode);
+    Field(res, 1) = caml_alloc_some(a);
+  }
   CAMLreturn(res);
 }
 

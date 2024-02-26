@@ -35,8 +35,19 @@ val iter : t -> (Unix.file_descr -> Io_events.t -> unit) -> unit
 
 (** IO *)
 
-external accept4 : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+external file_descr_of_int : int -> Unix.file_descr = "%identity"
+
+external accept4 : Unix.file_descr -> int * Unix.sockaddr option
   = "caml_accept4"
+
+(* Similar to Unix.sockaddr but lazy loaded *)
+(* module Sockaddr : sig *)
+(*   type t *)
+
+(*   val to_sockaddr : t -> Unix.sockaddr *)
+(* end *)
+
+(* val accept4_2 : Unix.file_descr -> Unix.file_descr * Sockaddr.t *)
 
 external read :
   Unix.file_descr ->

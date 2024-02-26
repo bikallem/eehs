@@ -42,7 +42,7 @@ external file_descr_of_int : int -> Unix.file_descr = "%identity"
 
 (* IO syscalls *)
 
-external accept4 : Unix.file_descr -> Unix.file_descr * Unix.sockaddr
+external accept4 : Unix.file_descr -> int * Unix.sockaddr option
   = "caml_accept4"
 
 external read :
@@ -52,6 +52,67 @@ external read :
   (int[@untagged]) ->
   (int[@untagged]) = "caml_read_byte" "caml_read"
 [@@noalloc]
+
+let _traceln fmt = Format.(fprintf std_formatter ("\n+" ^^ fmt ^^ "%!"))
+
+(* external caml_accept4_2 : *)
+(*   Unix.file_descr -> flags[@untagged]) -> (int[@untagged]) *)
+(*   = "caml_accept4_2_byte" "caml_accept4_2" *)
+(* [@@noalloc] *)
+
+(* external inet_addr_of_raw_bytes : string -> Unix.inet_addr = "%identity" *)
+
+(* module Sockaddr = struct *)
+(*   type addr = bytes (1* struct sockaddr_storage *1) *)
+(*   type addrlen = int (1* sizeof(addr) *1) *)
+(*   type t = addr * addrlen *)
+
+(* let c_strnlen buf ofs maxlen = *)
+(*   if ofs == maxlen then maxlen *)
+(*   else if Bytes.get_uint8 buf ofs == 0 then ofs + 1 *)
+(*   else c_strnlen buf (ofs + 1) maxlen *)
+
+(* let strlen = ref 0 in *)
+(* for i = 0 to len do *)
+(*   if Bytes.get_uint8 buf i == 0 then *)
+(* done; *)
+(* Bytes.sub_string buf 0 *)
+
+(* let decode_unixdomain_sockaddr (addr, addrlen) = *)
+
+(* let to_sockaddr (addr, _addrlen) = *)
+(*   let ss_family = Bytes.get_int16_le addr Sock_cfg.sa_ss_family_ofs in *)
+(*   if ss_family = Sock_cfg.af_inet then *)
+(*     let inet_addr = *)
+(*       Bytes.sub_string addr Sock_cfg.sin_addr_ofs Sock_cfg.in_addr_sz *)
+(*       |> inet_addr_of_raw_bytes *)
+(*     in *)
+(*     (1* _traceln "sin_port_ofs: %i" Sock_cfg.sin_port_ofs; *1) *)
+(*     let port = Bytes.get_int16_le addr 2 in *)
+(*     Unix.ADDR_INET (inet_addr, port) *)
+(*   else if ss_family = Sock_cfg.af_inet6 then *)
+(*     let inet6_addr = *)
+(*       Bytes.sub_string addr Sock_cfg.sin6_addr_ofs Sock_cfg.in6_addr_sz *)
+(*       |> inet_addr_of_raw_bytes *)
+(*     in *)
+(*     let port = Bytes.get_int16_le addr Sock_cfg.sin6_port_ofs in *)
+(*     Unix.ADDR_INET (inet6_addr, port) *)
+(*   else raise @@ Unix.(Unix_error (EAFNOSUPPORT, "", "")) *)
+(* end *)
+
+(* let accept4_2 fd = *)
+(*   let addrlen = Sock_cfg.sockaddr_storage_sz in *)
+(*   let sockaddr = Bytes.make addrlen '\000' in *)
+(*   let addrlen_ref = Bytes.make Sock_cfg.socklen_t_sz '\000' in *)
+(*   Bytes.set_int32_le addrlen_ref 0 (Int32.of_int addrlen); *)
+(*   let flags = Sock_cfg.(sock_nonblock lor sock_cloexec) in *)
+(*   let ret = caml_accept4_2 fd sockaddr addrlen_ref flags in *)
+(*   if ret = -1 then raise @@ Error.raise_syscall_error "accept4" *)
+(*   else *)
+(*     let fd = file_descr_of_int ret in *)
+(*     let addrlen = Bytes.get_int32_le addrlen_ref 0 in *)
+(*     _traceln "addrlen %li" addrlen; *)
+(*     (fd, (sockaddr, Int32.to_int addrlen)) *)
 
 (* external unsafe_write : Unix.file_descr -> string -> int -> int -> int *)
 (*   = "caml_write" *)

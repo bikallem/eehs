@@ -17,7 +17,7 @@ let initial_buffer_size = 0x1000 (* 4K *)
 let pp_sockaddr fmt = function
   | Unix.ADDR_UNIX _ -> failwith "Unix domain socket not supported"
   | ADDR_INET (addr, port) ->
-    Format.fprintf fmt "%s.%d" (Unix.string_of_inet_addr addr) port
+    Format.fprintf fmt "%s:%i" (Unix.string_of_inet_addr addr) port
 
 let traceln fmt = Format.(fprintf std_formatter ("\n+" ^^ fmt ^^ "%!"))
 
@@ -52,22 +52,33 @@ let client_cb (client : client) (ev : Epoll.Io_events.t) =
 
 let server_cb (epoll : Epoll.t) (fdcb : (Unix.file_descr, callback) Hashtbl.t)
     server_fd (_ : Epoll.Io_events.t) =
-  let fd, addr = Epoll.accept4 server_fd in
-  let client =
-    {
-      read_buf = Bytes.create initial_buffer_size (* 4K *);
-      epoll;
-      addr;
-      fd;
-      fd_closed = false;
-      read_offset = 0;
-    }
+  let rec accept_loop () =
+    let ret, addr = Epoll.accept4 server_fd in
+    if ret = -1 then begin
+      let errno = Error.caml_errno () in
+      if errno = Err_config.eagain || errno = Err_config.ewouldblock then ()
+      else Error.raise_syscall_error "accept4"
+    end
+    else
+      let addr = Option.get addr in
+      let fd = Epoll.file_descr_of_int ret in
+      let client =
+        {
+          read_buf = Bytes.create initial_buffer_size (* 4K *);
+          epoll;
+          addr;
+          fd;
+          fd_closed = false;
+          read_offset = 0;
+        }
+      in
+      traceln "Connected to %a" pp_sockaddr client.addr;
+      Epoll.add epoll client.fd Epoll.Io_events.read;
+      let client_cb = client_cb client in
+      Hashtbl.replace fdcb client.fd client_cb;
+      accept_loop ()
   in
-  traceln "Connected to %a" pp_sockaddr client.addr;
-
-  Epoll.add epoll client.fd Epoll.Io_events.read;
-  let client_cb = client_cb client in
-  Hashtbl.replace fdcb client.fd client_cb
+  accept_loop ()
 
 let max_connections = 128
 
@@ -84,7 +95,9 @@ let () =
   let epoll = Epoll.create max_connections in
   Epoll.add epoll server_fd Epoll.Io_events.rw;
 
-  (* hashtble with mapping {file_descr => callback} *)
+  (* hashtble with mapping {file_descr => callback}
+     TODO remove hashtable usage by storing cb directly into epoll
+  *)
   let fdcb = Hashtbl.create max_connections in
   let server_cb = server_cb epoll fdcb server_fd in
   Hashtbl.replace fdcb server_fd server_cb;
