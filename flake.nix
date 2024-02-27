@@ -32,70 +32,6 @@
                 #     hash = "sha256-211q6ZmfEdMgM1zMUDBF8sLHyPpoxZ3gPmiN5CZCH8g=";
                 #   };
               });
-
-            miou = with oprev;
-              buildDunePackage rec {
-                version = "0.0.1-beta2";
-                pname = "miou";
-
-                src = prev.fetchFromGitHub {
-                  owner = "robur-coop";
-                  repo = "miou";
-                  rev = "master";
-                  hash = "sha256-AVpGylxGxG+D5pMSlomzGtxuO88OSUPh5u7upZXw6jk=";
-                };
-
-                propagatedBuildInputs = [];
-              };
-
-            bechamel = with oprev;
-              buildDunePackage {
-                pname = "bechamel";
-                version = "0.5.0";
-
-                src = builtins.fetchurl {
-                  url = https://github.com/mirage/bechamel/releases/download/v0.5.0/bechamel-0.5.0.tbz;
-                  sha256 = "0s68bsfa4j8y69pfxlylc9qrfkgrifc849rmcyh2x9jz752ab6ig";
-                };
-                propagatedBuildInputs = [fmt];
-              };
-
-            bechamel-notty = with oprev;
-              buildDunePackage rec {
-                version = "0.5.0";
-                pname = "bechamel-notty";
-
-                src = prev.fetchurl {
-                  url = "https://github.com/mirage/bechamel/releases/download/v0.5.0/bechamel-0.5.0.tbz";
-                  sha256 = "sha256-L5qlRDlfpi6gZzUngpiL+U2XcWLU0+5uMh5JopxeyGg=";
-                };
-
-                propagatedBuildInputs = [notty bechamel fmt];
-              };
-
-            thread-table = with oprev;
-              buildDunePackage rec {
-                version = "1.0.0";
-                pname = "thread-table";
-
-                src = prev.fetchurl {
-                  url = "https://github.com/ocaml-multicore/thread-table/releases/download/1.0.0/thread-table-1.0.0.tbz";
-                  sha256 = "sha256-pIzYhGNZfflELEuqaczAYJHKd7px5DjTYJ+64PO4Hd0=";
-                };
-              };
-
-            domain-local-await = with oprev;
-              buildDunePackage rec {
-                version = "1.0.1";
-                pname = "domain-local-await";
-
-                src = prev.fetchurl {
-                  url = "https://github.com/ocaml-multicore/domain-local-await/releases/download/${version}/domain-local-await-${version}.tbz";
-                  sha256 = "sha256-KVIRPFPLB+KwVLLchs5yk5Ex2rggfI8xOa2yPmTN+m8=";
-                };
-
-                propagatedBuildInputs = [thread-table];
-              };
           });
       });
 
@@ -110,26 +46,14 @@
           ocaml
           ocamlformat
           findlib
-          # pkgs.topiary
         ];
 
         packages = with opkgs; [
           base_bigstring
           dune-configurator
-          cstruct
-          miou
-          bheap
           fmt
-          domain-local-await
-          kcas
-          kcas_data
           logs
-          lwd
-          bechamel
-          bechamel-notty
-          notty
-          nottui
-          lwt
+          pkgs.liburing
           pkgs.hyperfine
           pkgs.netcat
           pkgs.rlwrap
