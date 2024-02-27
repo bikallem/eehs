@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
 	/* wait for the sqe to complete. */
 	io_uring_wait_cqe(&ring, &cqe);
+	io_uring_cqe_seen(&ring, cqe);
 
 	printf("%.*s", BUFFER_SIZE, buf);
 
