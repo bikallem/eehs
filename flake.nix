@@ -16,7 +16,7 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages."${system}".extend (final: prev: rec {
         ocamlPackages =
-          prev.ocaml-ng.ocamlPackages_5_1.overrideScope'
+          prev.ocaml-ng.ocamlPackages_5_1.overrideScope
           (ofinal: oprev: rec {
             ocaml =
               (oprev.ocaml.override {
@@ -53,6 +53,7 @@
           dune-configurator
           fmt
           logs
+          pkgs.nushell
           pkgs.liburing
           pkgs.hyperfine
           pkgs.netcat
