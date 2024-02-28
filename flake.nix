@@ -62,6 +62,7 @@
           pkgs.moreutils
           pkgs.cling
           pkgs.gcc
+          pkgs.llvmPackages_17.libcxxClang
         ];
       };
     });
