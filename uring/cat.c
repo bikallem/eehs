@@ -17,11 +17,14 @@ int main(int argc, char *argv[])
 	int ret;
 	int got = 0;
 
-	fd = open("hello.txt", O_NONBLOCK | O_RDONLY);
+	if (argc < 2) {
+		printf("\nUsage: cat [file]");
+		exit(EXIT_FAILURE);
+	}
+
 	io_uring_queue_init(10, &ring, 0);
 
-	/* wait for the sqe to complete. */
-	/* __kernel_timespec */
+	fd = open(argv[1], O_NONBLOCK | O_RDONLY);
 
 	for (;;) {
 		if (NULL == (sqe = io_uring_get_sqe(&ring)))
