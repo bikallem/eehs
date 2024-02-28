@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
 	char buf[BUFFER_SIZE];
 	int fd; /* open.txt */
 	int ret;
-	int got = 0;
 
 	if (argc < 2) {
 		printf("\nUsage: cat [file]");
@@ -30,7 +29,7 @@ int main(int argc, char *argv[])
 		if (NULL == (sqe = io_uring_get_sqe(&ring)))
 			perror("io_uring_get_sqe() failed.");
 
-		io_uring_prep_read(sqe, fd, buf, BUFFER_SIZE, got);
+		io_uring_prep_read(sqe, fd, buf, BUFFER_SIZE, -1);
 		ret = io_uring_submit_and_wait(&ring, 1);
 		if (ret <= 0) {
 			perror("io_uring_submit_and_wait() failed");
@@ -48,7 +47,6 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		got += cqe->res;
 		printf("\n%.*s", BUFFER_SIZE, buf);
 		fflush(stdout);
 		memset(buf, '\000', BUFFER_SIZE);
