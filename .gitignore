@@ -28,3 +28,5 @@ setup.log
 # Local OPAM switch
 _opam/
 uring/cat
+uring/echo
+uring/shift
