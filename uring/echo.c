@@ -156,16 +156,22 @@ static struct io_uring_sqe* get_sqe(struct io_uring* ring)
  * io_uring_pre_provide_buffers() to add to the pool. But that approach is
  * slower and has been deprecated by using the faster rign provided buffers.
  */
-static int setup_recv_rings(struct conn* c)
+static int setup_recv_rings(struct io_uring* ring, struct conn* c)
 {
     struct conn_buf_ring* cbr = &c->in_br;
-    int i;
+    int ret, i;
     void* ptr;
 
     cbr->buf = NULL;
 
     if (posix_memalign(&cbr->buf, page_size, buf_size * nr_bufs)) {
         fprintf(stderr, "\nposix memalign");
+        return 1;
+    }
+
+    cbr->br = io_uring_setup_buf_ring(ring, nr_bufs, cbr->bgid, 0, &ret);
+    if (!cbr->br) {
+        fprintf(stderr, "\nBuffer ring register failed %d\n", ret);
         return 1;
     }
 
@@ -221,7 +227,7 @@ static int handle_accept(struct io_uring* ring, struct io_uring_cqe* cqe)
 
     printf("\nNew client: id=%d, in=%d", c->tid, c->in_fd);
 
-    if (setup_recv_rings(c))
+    if (setup_recv_rings(ring, c))
         return 1;
 
     submit_receive(ring, c);
