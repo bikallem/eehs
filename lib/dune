@@ -5,7 +5,7 @@
   (language c)
   (names epoll_stubs)
   (flags :standard))
- (libraries unix cstruct base_bigstring))
+ (libraries unix base_bigstring))
 
 (rule
  (targets epoll_cfg.ml sock_cfg.ml err_cfg.ml)
