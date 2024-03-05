@@ -1,6 +1,7 @@
 #include <liburing.h>
 #include <linux/io_uring.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,12 +66,12 @@ struct userdata {
     };
 };
 
-/* static struct conn* cqe_to_conn(struct io_uring_cqe* cqe) */
-/* { */
-/*     struct userdata ud = { .val = cqe->user_data }; */
+static struct conn* cqe_to_conn(struct io_uring_cqe* cqe)
+{
+    struct userdata ud = { .val = cqe->user_data };
 
-/*     return &conns[ud.op_tid & TID_MASK]; */
-/* } */
+    return &conns[ud.op_tid & TID_MASK];
+}
 
 static inline int cqe_to_op(struct io_uring_cqe* cqe)
 {
@@ -234,6 +235,55 @@ static int handle_accept(struct io_uring* ring, struct io_uring_cqe* cqe)
     return 0;
 }
 
+static int handle_recv(struct io_uring* ring, struct io_uring_cqe* cqe)
+{
+    struct conn* c;
+    struct conn_buf_ring* cbr;
+    int bid;
+    char* data;
+
+    c = cqe_to_conn(cqe);
+
+    /*
+     * Not having a buffer attached should only happen if we get a zero
+     * sized receive, because the other end closed the connection. It
+     * cannot happen otherwise, as all our receives are using provided
+     * buffers and hence it's not possible to return a CQE with a non-zero
+     * result and not have a buffer attached.
+     */
+    /* if(!(cqe->flags & IORING_CQE_F_BUFFER)) { */
+    /*   if(!cqe->res) { */
+    /*     close_cd */
+    /*   } */
+    /* } */
+
+    bid = cqe->flags >> IORING_CQE_BUFFER_SHIFT;
+
+    printf("\n%d: recv: bid=%d, res=%d", c->tid, bid, cqe->res);
+
+    /*
+     * Retrieve received data.
+     */
+    cbr = &c->in_br;
+    data = malloc(cqe->res + 1);
+    strncpy(data, cbr->buf + bid * buf_size, cqe->res);
+    data[cqe->res] = '\0';
+
+    printf("\ndata: %s", data);
+
+    free(data);
+
+    /* replenish_buffer(c, bid); */
+
+    /*
+     * Re-arm the receive multishot again if terminated.
+     */
+    if (!(cqe->flags & IORING_CQE_F_MORE))
+        submit_receive(ring, c);
+
+    return 0;
+}
+
 static int handle_cqe(struct io_uring* ring, struct io_uring_cqe* cqe)
 {
     (void)ring;
@@ -247,6 +297,9 @@ static int handle_cqe(struct io_uring* ring, struct io_uring_cqe* cqe)
     switch (cqe_to_op(cqe)) {
     case __ACCEPT:
         ret = handle_accept(ring, cqe);
+        break;
+    case __RECV:
+        ret = handle_recv(ring, cqe);
         break;
     default:
         fprintf(stderr, "bad user data %lx\n", (long)cqe->user_data);
