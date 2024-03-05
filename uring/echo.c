@@ -212,6 +212,20 @@ static void submit_receive(struct io_uring* ring, struct conn* c)
     sqe->flags |= IOSQE_BUFFER_SELECT;
 }
 
+/*
+ * We are done with this buffer, add it back to our pool so that the
+ * kernel is free to use it again.
+ */
+static void replenish_buffer(struct conn* c, int bid)
+{
+    struct conn_buf_ring* cbr = &c->in_br;
+    void* this_buf;
+
+    this_buf = cbr->buf + bid + buf_size;
+    io_uring_buf_ring_add(cbr->br, this_buf, buf_size, bid, br_mask, 0);
+    io_uring_buf_ring_advance(cbr->br, 1);
+}
+
 static int handle_accept(struct io_uring* ring, struct io_uring_cqe* cqe)
 {
     struct conn* c;
@@ -266,14 +280,13 @@ static int handle_recv(struct io_uring* ring, struct io_uring_cqe* cqe)
      */
     cbr = &c->in_br;
     data = malloc(cqe->res + 1);
-    strncpy(data, cbr->buf + bid * buf_size, cqe->res);
+    memcpy(data, cbr->buf + bid * buf_size, cqe->res);
     data[cqe->res] = '\0';
 
     printf("\ndata: %s", data);
 
+    replenish_buffer(c, bid);
     free(data);
-
-    /* replenish_buffer(c, bid); */
 
     /*
      * Re-arm the receive multishot again if terminated.
