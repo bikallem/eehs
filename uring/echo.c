@@ -1,3 +1,5 @@
+#undef _FORTIFY_SOURCE
+
 #include <liburing.h>
 #include <linux/io_uring.h>
 #include <netinet/in.h>

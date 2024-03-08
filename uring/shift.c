@@ -1,3 +1,5 @@
+#undef _FORTIFY_SOURCE
+
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -48,7 +50,7 @@ int main(int argc, char* argv[])
 
     snprintf(bits, sz, "%016b", op);
     printf("\nop %d\t\t: %s", op, bits);
-    printf("\nop %d\t\t: %016b", op-1, op-1);
+    printf("\nop %d\t\t: %016b", op - 1, op - 1);
 
     snprintf(bits, sz, "%016b", tid);
     printf("\ntid %d\t: %s", tid, bits);
